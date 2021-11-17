@@ -1,4 +1,5 @@
 import 'package:animate_do/animate_do.dart';
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/src/helpers/helpers.dart';
 import 'package:music_player/src/models/audioplayer_model.dart';
@@ -37,7 +38,7 @@ class Background extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      height: screenSize.height * 0.8,
+      height: screenSize.height * 0.75,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.only(bottomLeft: Radius.circular(60)),
         gradient: LinearGradient(
@@ -81,6 +82,9 @@ class _TituloPlayState extends State<TituloPlay> with SingleTickerProviderStateM
 
   bool isPlaying = false;
   late AnimationController playAnimation;
+  bool firstTime = true;
+
+  final assetAudioPlayer = new AssetsAudioPlayer();
 
   @override
   void initState() {
@@ -94,6 +98,26 @@ class _TituloPlayState extends State<TituloPlay> with SingleTickerProviderStateM
     this.playAnimation.dispose();
 
     super.dispose();
+  }
+
+  void open() {
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context, listen: false);
+
+    assetAudioPlayer.open(
+      Audio('assets/frio.mp3'),
+      autoStart: true,
+      showNotification: true
+    );
+
+    assetAudioPlayer.currentPosition.listen((duration) { 
+      audioPlayerModel.current = duration;
+    });
+
+    assetAudioPlayer.current.listen((playingAudio) {
+      audioPlayerModel.songDuration = playingAudio?.audio.duration ?? Duration(seconds: 0);
+    });
+
+    
   }
 
   @override
@@ -132,6 +156,13 @@ class _TituloPlayState extends State<TituloPlay> with SingleTickerProviderStateM
                 audioPlayerModel.controller.repeat();
               }
 
+              if ( firstTime ){
+                this.open();
+                firstTime = false;
+              } else {
+                assetAudioPlayer.playOrPause();
+              }
+
             },
           )
         ],
@@ -152,7 +183,6 @@ class ImagenDiscoDuracion extends StatelessWidget {
           ImagenDisco(),
           SizedBox(width: 40,),
           BarraProgreso(),
-          SizedBox(width: 20,),
         ],
       ),
     );
@@ -160,14 +190,17 @@ class ImagenDiscoDuracion extends StatelessWidget {
 }
 
 class BarraProgreso extends StatelessWidget {
-  final estilo = TextStyle(color: Colors.white.withOpacity(0.4));
 
   @override
   Widget build(BuildContext context) {
+    final estilo = TextStyle(color: Colors.white.withOpacity(0.4));
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context);
+    final porcentaje = audioPlayerModel.porcentaje;
+
     return Container(
       child: Column(
         children: [
-          Text('00:00', style: estilo,),
+          Text('${ audioPlayerModel.songTotalDuration }', style: estilo,),
           SizedBox(height: 10,),
           Stack(
             children: [
@@ -181,14 +214,14 @@ class BarraProgreso extends StatelessWidget {
                 bottom: 0,
                 child: Container(
                   width: 3,
-                  height: 150,
+                  height: 230 * porcentaje,
                   color: Colors.white.withOpacity(0.8),
                 ),
               )
             ],
           ),
           SizedBox(height: 10,),
-          Text('00:00', style: estilo,),
+          Text('${ audioPlayerModel.currentSecond }', style: estilo,),
 
         ],
       ),
