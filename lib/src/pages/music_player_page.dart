@@ -1,6 +1,9 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:music_player/src/helpers/helpers.dart';
+import 'package:music_player/src/models/audioplayer_model.dart';
 import 'package:music_player/src/widgets/custom_appbar.dart';
+import 'package:provider/provider.dart';
 
 
 class MusicPlayerPage extends StatelessWidget {
@@ -16,6 +19,7 @@ class MusicPlayerPage extends StatelessWidget {
               CustomAppBar(),
               ImagenDiscoDuracion(),
               TituloPlay(),
+              SizedBox(height: 20,),
               Expanded(child: Lyrics())
             ],
            ),
@@ -115,13 +119,19 @@ class _TituloPlayState extends State<TituloPlay> with SingleTickerProviderStateM
               progress: playAnimation
             ),
             onPressed: (){
+
+              final audioPlayerModel = Provider.of<AudioPlayerModel>(context, listen: false);
+
               if( this.isPlaying ){
                 playAnimation.reverse();
                 this.isPlaying = false;
+                audioPlayerModel.controller.stop();
               } else {
                 playAnimation.forward();
                 this.isPlaying = true;
+                audioPlayerModel.controller.repeat();
               }
+
             },
           )
         ],
@@ -190,6 +200,8 @@ class ImagenDisco extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final audioPlayerModel = Provider.of<AudioPlayerModel>(context);
+
     return Container(
       padding: EdgeInsets.all(20),
       width: 250,
@@ -199,7 +211,16 @@ class ImagenDisco extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Image(image: AssetImage('assets/danieylasiofrio.jpg')),
+
+            SpinPerfect(
+              animate: false,
+              duration: Duration(seconds: 10),
+              infinite: true,
+              manualTrigger: true,
+              controller: ( animationController ) => audioPlayerModel.controller = animationController,
+              child: Image(image: AssetImage('assets/danieylasiofrio.jpg'))
+            ),
+
             Container(
               width: 25,
               height: 25,
@@ -208,6 +229,7 @@ class ImagenDisco extends StatelessWidget {
                 borderRadius: BorderRadius.circular(100)
               ),
             ),
+
             Container(
               width: 18,
               height: 18,
@@ -217,6 +239,7 @@ class ImagenDisco extends StatelessWidget {
                 borderRadius: BorderRadius.circular(100)
               ),
             ),
+
           ],
         )
       ),
